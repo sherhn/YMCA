@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,12 +30,12 @@ namespace YMCA
             };
 
             var bestResolution = resolutions[0];
-            var minValue = int.MaxValue;
+            int minValue = int.MaxValue;
 
             // Определяем лучшее разрешения, из принципа оставления наименьшего кол-ва пустых пикселей
             foreach (var res in resolutions)
             {
-                var value = fileLength % res.Size * res.Size;
+                int value = fileLength % res.Size * res.Size;
                 if (value < minValue)
                 {
                     minValue = value;
@@ -71,6 +72,19 @@ namespace YMCA
             // Объединяем все биты в одну строку
             string result = string.Join("", binaryParts);
             return result;
+        }
+
+        public Color HexToColor(string hex)
+        {
+            // Убираем решетку
+            hex = hex.TrimStart('#');
+
+            // Разбираем компоненты
+            int r = Convert.ToInt32(hex.Substring(0, 2), 16);
+            int g = Convert.ToInt32(hex.Substring(2, 2), 16);
+            int b = Convert.ToInt32(hex.Substring(4, 2), 16);
+
+            return Color.FromArgb(r, g, b);
         }
     }
 }

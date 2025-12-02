@@ -61,8 +61,8 @@ namespace YMCA
         {
             try
             {
-                // Подгружаем схему
-                List<EncryptionSchema> schemas = EncryptionSchema.LoadSchemasFromJson(@"Resources/algorithms.json");
+                // Инициализируем поле класса schemas
+                schemas = EncryptionSchema.LoadSchemasFromJson(@"Resources/algorithms.json");
 
                 // Фильтруем null-элементы и добавляем только валидные
                 foreach (var schema in schemas)
@@ -125,13 +125,16 @@ namespace YMCA
             {
                 try
                 {
+                    progressBar1.Value = 0;
+                    label4.Text = "0%";
+
                     byte[] fileBytes = File.ReadAllBytes(filePath);
                     FileConverter converter = new FileConverter();
-                    converter.ConvertMedia(fileBytes, Path.GetFileName(filePath), schemas[selectedIndex]);
+                    converter.ConvertMedia(fileBytes, Path.GetFileName(filePath), schemas[selectedIndex], progressBar1, label4);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("При загрузке файла произошла ошибка!", "Ошибка загрузки файла");
+                    MessageBox.Show($"При загрузке файла произошла ошибка: {ex.Message}", "Ошибка загрузки файла");
                 }
             }
             else
