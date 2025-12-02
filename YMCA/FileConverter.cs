@@ -67,8 +67,8 @@ namespace YMCA
         {
             try
             {
-                // Создаем временную папку
-                string tempDir = "temp_frames";
+                // Создаем временную папку в системной временной директории
+                string tempDir = Path.Combine(Path.GetTempPath(), "YMCA_Frames_" + Guid.NewGuid().ToString());
                 Directory.CreateDirectory(tempDir);
 
                 // Обнуляем прогрессбар
@@ -139,7 +139,7 @@ namespace YMCA
                         label.Refresh();
                     });
 
-                    // Обновляем прогрессбра
+                    // Обновляем прогрессбар
                     progressBar.Invoke((MethodInvoker)delegate
                     {
                         progressBar.Value = i + 1;
@@ -154,6 +154,10 @@ namespace YMCA
                 {
                     progressBar.Value = progressBar.Maximum;
                 });
+
+                // TODO: Тут типа видос
+                // После создания видео можно удалить временную папку:
+                // Directory.Delete(tempDir, true);
 
                 return 0;
             }
