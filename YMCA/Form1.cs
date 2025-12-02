@@ -126,7 +126,7 @@ namespace YMCA
                 try
                 {
                     progressBar1.Value = 0;
-                    label4.Text = "0%";
+                    label4.Text = "0.0%";
 
                     byte[] fileBytes = File.ReadAllBytes(filePath);
                     FileConverter converter = new FileConverter();

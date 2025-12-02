@@ -149,6 +149,13 @@ namespace YMCA
                     cur_pos = next_pos;
                 }
 
+                // Завершаем лейбл процента
+                label.Invoke((MethodInvoker)delegate
+                {
+                    label.Text = $"100.0%";
+                    label.Refresh();
+                });
+
                 // Завершаем прогресс-бар
                 progressBar.Invoke((MethodInvoker)delegate
                 {
