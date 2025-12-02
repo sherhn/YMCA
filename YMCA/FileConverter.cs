@@ -51,7 +51,7 @@ namespace YMCA
 
                 // Дополняем битовую строку до конца (до полного количества битов во всех кадрах)
                 int total_bits_needed = frame_count * bits_per_frame;
-                byte_flow = byte_flow.PadRight(total_bits_needed, Convert.ToChar(free_pixel_index));
+                byte_flow = byte_flow.PadRight(total_bits_needed, (char)('0' + free_pixel_index));
             }
 
             if (produce(schema.Colors, schema.Schema, frame_scale, frame_count, byte_flow, tools, progressBar, label) == 0)
