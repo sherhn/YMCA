@@ -44,6 +44,43 @@ namespace YMCA
             dropZoneLabel1.Font = new Font(dropZoneLabel1.Font, FontStyle.Italic);
             dropZoneLabel1.ForeColor = Color.Gray;
 
+            // Делаем panel1 рабочей дропзоной
+            panel1.AllowDrop = true;
+
+            panel1.DragEnter += (s, ev) =>
+            {
+                if (ev.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    ev.Effect = DragDropEffects.Copy;
+                    panel1.BackColor = Color.LightBlue; // Визуальная обратная связь
+                }
+            };
+
+            panel1.DragLeave += (s, ev) =>
+            {
+                panel1.BackColor = SystemColors.Control;
+            };
+
+            panel1.DragDrop += (s, ev) =>
+            {
+                panel1.BackColor = SystemColors.Control;
+
+                if (ev.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    string[] files = (string[])ev.Data.GetData(DataFormats.FileDrop);
+                    if (files.Length > 0)
+                    {
+                        filePath = files[0];
+                        label5.Text = "Выбран файл: " + Path.GetFileName(filePath);
+
+                        // Обновляем текст на панели
+                        dropZoneLabel1.Text = Path.GetFileName(filePath);
+                        dropZoneLabel1.Font = new Font(dropZoneLabel1.Font, FontStyle.Regular);
+                        dropZoneLabel1.ForeColor = SystemColors.ControlText;
+                    }
+                }
+            };
+
             // Для второй панели
             Label dropZoneLabel2 = new Label();
             dropZoneLabel2.Text = "Перетащите файл сюда";
