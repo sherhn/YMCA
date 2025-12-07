@@ -99,12 +99,13 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(1140, 401);
+            this.label4.Location = new System.Drawing.Point(1128, 401);
             this.label4.Name = "label4";
             this.label4.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.label4.Size = new System.Drawing.Size(29, 19);
+            this.label4.Size = new System.Drawing.Size(41, 19);
             this.label4.TabIndex = 9;
-            this.label4.Text = "0%";
+            this.label4.Text = "0,0%";
+            this.label4.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
             // label3
             // 
@@ -198,7 +199,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(1256, 651);
+            this.tabPage2.Size = new System.Drawing.Size(1256, 474);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Видео в файл";
             // 

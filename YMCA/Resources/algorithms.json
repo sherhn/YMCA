@@ -4,27 +4,39 @@
     "name": "Шифрование 2 бита",
     "algorithm_signature": "00000000",
     "colors": [ "#000000", "#FFFFFF" ],
-    "schema": 1
+    "schema": 1,
+    "crf": 10
   },
   {
     "id": 1,
     "name": "Устойчивое шифрование 2 бита",
     "algorithm_signature": "00000001",
     "colors": [ "#000000", "#FFFFFF" ],
-    "schema": 4
+    "schema": 4,
+    "crf": 40
   },
   {
     "id": 2,
     "name": "Шифрование 8 бит",
     "algorithm_signature": "00000010",
     "colors": [ "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#00FFFF", "#FF00FF", "#FFFF00" ],
-    "schema": 1
+    "schema": 1,
+    "crf": 10
   },
   {
     "id": 3,
     "name": "Устойчивое шифрование 8 бит",
-    "algorithm_signature": "00000010",
+    "algorithm_signature": "00000011",
     "colors": [ "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#00FFFF", "#FF00FF", "#FFFF00" ],
-    "schema": 4
+    "schema": 4,
+    "crf": 40
+  },
+  {
+    "id": 4,
+    "name": "Полу-устойчивое шифрование 8 бит",
+    "algorithm_signature": "00000100",
+    "colors": [ "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#00FFFF", "#FF00FF", "#FFFF00" ],
+    "schema": 2,
+    "crf": 20
   }
 ]

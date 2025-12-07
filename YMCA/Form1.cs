@@ -1,16 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using System.Text.Json;
 
 namespace YMCA
 {
@@ -19,17 +12,6 @@ namespace YMCA
         // Путь до файла
         string filePath;
         List<EncryptionSchema> schemas;
-
-        // Разрешения видео
-        int[,] scales = {
-            {256, 144},
-            {426, 240},
-            {640, 360},
-            {1280, 720},
-            {1920, 1080},
-            {2560, 1440},
-            {3840, 2160}
-        };
 
         public Form1()
         {

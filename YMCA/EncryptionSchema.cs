@@ -15,6 +15,7 @@ namespace YMCA
         public string Signature { get; set; }
         public string[] Colors { get; set; }
         public int Schema { get; set; }
+        public int Crf { get; set; }
 
         // Статический метод для загрузки схем из JSON файла
         public static List<EncryptionSchema> LoadSchemasFromJson(string filePath)

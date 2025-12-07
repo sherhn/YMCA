@@ -74,7 +74,7 @@ namespace YMCA
             return result;
         }
 
-        public Color HexToColor(string hex)
+        public Color hexToColor(string hex)
         {
             // Убираем решетку
             hex = hex.TrimStart('#');
@@ -85,6 +85,11 @@ namespace YMCA
             int b = Convert.ToInt32(hex.Substring(4, 2), 16);
 
             return Color.FromArgb(r, g, b);
+        }
+
+        public int calculateFPS(int count)
+        {
+            return Math.Min(60, Math.Max(1, count / 2));
         }
     }
 }

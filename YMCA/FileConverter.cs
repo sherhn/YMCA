@@ -10,9 +10,7 @@ namespace YMCA
     {
         public string ConvertMedia(byte[] bytes, string filename, EncryptionSchema schema, ProgressBar progressBar, Label label)
         {
-            // Находи папку "Загрузки"
-            string downloadsPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            string resultPath = Path.Combine(downloadsPath, "Downloads");
+            string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{filename}.mp4");
 
             FileTools tools = new FileTools();
 
@@ -54,16 +52,16 @@ namespace YMCA
                 byte_flow = byte_flow.PadRight(total_bits_needed, (char)('0' + free_pixel_index));
             }
 
-            if (produce(schema.Colors, schema.Schema, frame_scale, frame_count, byte_flow, tools, progressBar, label) == 0)
+            if (produce(schema.Colors, schema.Schema, schema.Crf, frame_scale, frame_count, byte_flow, outputPath, tools, progressBar, label) == 0)
             {
                 // Возвращаем путь к сохраненному видео
-                return resultPath;
+                return outputPath;
             }
 
             return "";
         }
 
-        private int produce(string[] colors, int schema, int[] frame_scale, int frame_count, string byte_flow, FileTools tools, ProgressBar progressBar, Label label)
+        private int produce(string[] colors, int schema, int crf, int[] frame_scale, int frame_count, string byte_flow, string outputPath, FileTools tools, ProgressBar progressBar, Label label)
         {
             try
             {
@@ -101,7 +99,7 @@ namespace YMCA
                         int colorIndex = byte_flow[j] - '0';
                         if (colorIndex >= 0 && colorIndex < colors.Length)
                         {
-                            Color pixelColor = tools.HexToColor(colors[colorIndex]);
+                            Color pixelColor = tools.hexToColor(colors[colorIndex]);
 
                             for (int x = 0; x < schema; x++)
                             {
@@ -128,8 +126,8 @@ namespace YMCA
                     }
 
                     // Сохраняем фрейм
-                    string outputPath = Path.Combine(tempDir, $"frame_{i:0000}.png");
-                    bitmap.Save(outputPath, ImageFormat.Png);
+                    string outpuFrametPath = Path.Combine(tempDir, $"frame_{i:0000}.png");
+                    bitmap.Save(outpuFrametPath, ImageFormat.Png);
                     bitmap.Dispose();
 
                     // Обновляем лейбл процента
@@ -162,9 +160,38 @@ namespace YMCA
                     progressBar.Value = progressBar.Maximum;
                 });
 
-                // TODO: Тут типа видос
-                // После создания видео можно удалить временную папку:
-                // Directory.Delete(tempDir, true);
+                // Собираем видео из кадров с помощью FFmpeg
+                string ffmpegPath = "ffmpeg.exe";
+
+                string ffmpegArgs = $"-framerate 60 -i \"{Path.Combine(tempDir, "frame_%04d.png")}\" -c:v libx264 -crf {crf.ToString()} -preset ultrafast -pix_fmt yuv420p -y \"{outputPath}\"";
+
+                try
+                {
+                    var processInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = ffmpegPath,
+                        Arguments = ffmpegArgs,
+                        CreateNoWindow = true,      // Не показывать окно консоли
+                        UseShellExecute = false    // Не использовать оболочку системы
+                    };
+
+                    using (var process = System.Diagnostics.Process.Start(processInfo))
+                    {
+                        process?.WaitForExit();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка FFmpeg: {ex.Message}", "Ошибка создания видео");
+                    return -1;
+                }
+
+                // Удаляем временную папку
+                try
+                {
+                    Directory.Delete(tempDir, true);
+                }
+                catch { }
 
                 return 0;
             }
