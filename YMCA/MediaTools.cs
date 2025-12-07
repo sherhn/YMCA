@@ -1,5 +1,7 @@
 ﻿using System;
-using System.Diagnostics; // Вот оно!
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
@@ -24,6 +26,142 @@ namespace YMCA.Resources
             {
                 process?.WaitForExit();
             }
+        }
+
+        public int DetermineColorIndex(int[][] colors, System.Drawing.Color color)
+        {
+            int targetRed = color.R;
+            int targetGreen = color.G;
+            int targetBlue = color.B;
+
+            int minDistance = int.MaxValue;
+            int minIndex = 0;
+
+            for (int i = 0; i < colors.Length; i++)
+            {
+                int[] baseColor = colors[i];
+                if (baseColor == null || baseColor.Length < 3)
+                {
+                    continue;
+                }
+
+                int red = baseColor[0];
+                int green = baseColor[1];
+                int blue = baseColor[2];
+
+                // Вычисляем расстояния
+                int distance =
+                    (red - targetRed) * (red - targetRed) +
+                    (green - targetGreen) * (green - targetGreen) +
+                    (blue - targetBlue) * (blue - targetBlue);
+
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    minIndex = i;
+                }
+            }
+
+            return minIndex;
+        }
+
+        public void identifySignature(string mediapath, ref Characteristics characteristics)
+        {
+            // Базовый массив черного и белого
+            int[][] baseColors = new int[][]
+            {
+                new int[] {0, 0, 0},      // Черный
+                new int[] {255, 255, 255} // Белый
+            };
+
+            Bitmap bitmap = new Bitmap(Path.Combine(mediapath, "frame_0001.png"));
+
+            // Позиция
+            int x = 0;
+            int y = 0;
+            int step = 0;
+
+            // Определяем был ли файл дополнен
+            int firstPixel = DetermineColorIndex(baseColors, bitmap.GetPixel(x, 0));
+
+            if (firstPixel == 0)
+            {
+                characteristics.Supplemented = true;
+            }
+
+            // Определяем шаг (кол-во пикселей на байт)
+            int secondPixel = firstPixel;
+
+            while (firstPixel == secondPixel)
+            {
+                x++;
+                step++;
+                secondPixel = DetermineColorIndex(baseColors, bitmap.GetPixel(x, 0));
+            }
+
+            // Берем середину по X для более устойчивой защмиы от помех сжатия
+            x = Math.Max(0, step / 2 - 1);
+
+            // Пропускаем идентификатор дополнения
+            x += step;
+
+            // Берем середину по Y для более устойчивой защмиы от помех сжатия
+            y = Math.Max(0, step / 2 - 1);
+
+            // Получаем id алгоритма
+            int pos = x;
+
+            for (int i = 0; i < 8; i++)
+            {
+                x += step;
+
+                if (x > bitmap.Width)
+                {
+                    y += step;
+                    x = Math.Max(0, step / 2 - 1);
+                }
+
+                characteristics.Signature += DetermineColorIndex(baseColors, bitmap.GetPixel(x, y)).ToString();
+            }
+
+            // Читаем расширение файла
+            string bitExtension = "";
+            List<char> chars = new List<char>();
+
+            for (int j = 0; j < 80; j++)
+            {
+                x += step;
+
+                if (x > bitmap.Width)
+                {
+                    y += step;
+                    x = Math.Max(0, step / 2 - 1);
+                }
+
+                bitExtension += DetermineColorIndex(baseColors, bitmap.GetPixel(x, y)).ToString();
+
+                if (bitExtension.Length == 8)
+                {
+                    int charCode = Convert.ToInt32(bitExtension, 2);
+                    
+                    // Конвертируем число в символ
+                    char c = (char)charCode;
+
+                    chars.Add(c);
+
+                    bitExtension = "";
+                }
+            }
+
+            // Объединяем символы в строку
+            string extension = new string(chars.ToArray());
+
+            // Убираем нулевые символы в конце
+            characteristics.Extension = extension.TrimEnd('\0');
+
+
+            MessageBox.Show($"{characteristics.Supplemented} | {characteristics.Signature} | {x} | {y} | {step} | {characteristics.Extension}", "Ошибка загрузки файла");
+
         }
     }
 }

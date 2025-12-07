@@ -18,7 +18,7 @@ namespace YMCA
             string byte_flow = tools.getBytes(bytes, schema.Colors.Length);
 
             // Прибавляем расширение файла и алгоритм к началу строки битов
-            byte_flow = tools.getSignature(Path.GetExtension(filename)) + schema.Signature + byte_flow;
+            byte_flow = schema.Signature + tools.getSignature(Path.GetExtension(filename)) + byte_flow;
 
             // Один раз вычисляем длину битовой строки
             int byte_length = byte_flow.Length;

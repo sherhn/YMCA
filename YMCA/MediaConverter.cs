@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,13 @@ using YMCA.Resources;
 
 namespace YMCA
 {
+    public class Characteristics
+    {
+        public bool Supplemented { get; set; } = false;
+        public string Extension { get; set; }
+        public string Signature { get; set; }
+    }
+
     internal class MediaConverter
     {
         public string ConvertMedia(string mediaPath)
@@ -17,10 +25,17 @@ namespace YMCA
             string tempDir = Path.Combine(Path.GetTempPath(), "YMCA_Frames_" + Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempDir);
 
+            Characteristics characteristics = new Characteristics();
             MediaTools tools = new MediaTools();
 
+            // Получаем все кадры
             tools.getFrames(mediaPath, tempDir);
-            MessageBox.Show("Файл не выбран!", "Ошибка загрузки файла");
+
+            // Получаем инфу о файле
+            tools.identifySignature(tempDir, ref characteristics);
+
+
+
 
             return "resultPath";
         }
