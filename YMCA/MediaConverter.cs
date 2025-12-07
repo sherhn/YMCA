@@ -4,20 +4,25 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using YMCA.Resources;
 
 namespace YMCA
 {
     internal class MediaConverter
     {
-        public string Convert(string binary, string filename, EncryptionSchema algorithm)
+        public string ConvertMedia(string mediaPath)
         {
-            // Конечный пункт сохранения файла
-            string resultPath = "";
-
-            string tempDir = "temp_frames";
+            // Создаем временную папку в системной временной директории
+            string tempDir = Path.Combine(Path.GetTempPath(), "YMCA_Frames_" + Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempDir);
 
-            return resultPath;
+            MediaTools tools = new MediaTools();
+
+            tools.getFrames(mediaPath, tempDir);
+            MessageBox.Show("Файл не выбран!", "Ошибка загрузки файла");
+
+            return "resultPath";
         }
 
         private int produce(string filename)

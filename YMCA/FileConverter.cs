@@ -8,7 +8,7 @@ namespace YMCA
 {
     internal class FileConverter
     {
-        public string ConvertMedia(byte[] bytes, string filename, EncryptionSchema schema, ProgressBar progressBar, Label label)
+        public void ConvertFile(byte[] bytes, string filename, EncryptionSchema schema, ProgressBar progressBar, Label label)
         {
             string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{filename}.mp4");
 
@@ -54,11 +54,8 @@ namespace YMCA
 
             if (produce(schema.Colors, schema.Schema, schema.Crf, frame_scale, frame_count, byte_flow, outputPath, tools, progressBar, label) == 0)
             {
-                // Возвращаем путь к сохраненному видео
-                return outputPath;
+                MessageBox.Show($"Файл успешно создан: {outputPath}", "Успешно");
             }
-
-            return "";
         }
 
         private int produce(string[] colors, int schema, int crf, int[] frame_scale, int frame_count, string byte_flow, string outputPath, FileTools tools, ProgressBar progressBar, Label label)

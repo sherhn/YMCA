@@ -213,11 +213,12 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(1140, 401);
+            this.label9.Location = new System.Drawing.Point(1128, 401);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(29, 19);
+            this.label9.Size = new System.Drawing.Size(41, 19);
             this.label9.TabIndex = 6;
-            this.label9.Text = "0%";
+            this.label9.Text = "0,0%";
+            this.label9.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
             // label8
             // 
@@ -247,6 +248,7 @@
             this.button4.TabIndex = 3;
             this.button4.Text = "Выбрать файл";
             this.button4.UseVisualStyleBackColor = false;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // button3
             // 
@@ -258,6 +260,7 @@
             this.button3.TabIndex = 2;
             this.button3.Text = "Начать обработку";
             this.button3.UseVisualStyleBackColor = false;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // label6
             // 

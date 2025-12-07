@@ -86,10 +86,5 @@ namespace YMCA
 
             return Color.FromArgb(r, g, b);
         }
-
-        public int calculateFPS(int count)
-        {
-            return Math.Min(60, Math.Max(1, count / 2));
-        }
     }
 }

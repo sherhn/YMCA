@@ -11,6 +11,7 @@ namespace YMCA
     {
         // Путь до файла
         string filePath;
+        string mediaPath;
         List<EncryptionSchema> schemas;
 
         public Form1()
@@ -70,6 +71,43 @@ namespace YMCA
             dropZoneLabel2.TextAlign = ContentAlignment.MiddleCenter;
             dropZoneLabel2.Font = new Font(dropZoneLabel2.Font, FontStyle.Italic);
             dropZoneLabel2.ForeColor = Color.Gray;
+
+            // Делаем panel2 рабочей дропзоной
+            panel2.AllowDrop = true;
+
+            panel2.DragEnter += (s, ev) =>
+            {
+                if (ev.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    ev.Effect = DragDropEffects.Copy;
+                    panel2.BackColor = Color.LightBlue; // Визуальная обратная связь
+                }
+            };
+
+            panel2.DragLeave += (s, ev) =>
+            {
+                panel2.BackColor = SystemColors.Control;
+            };
+
+            panel2.DragDrop += (s, ev) =>
+            {
+                panel2.BackColor = SystemColors.Control;
+
+                if (ev.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    string[] files = (string[])ev.Data.GetData(DataFormats.FileDrop);
+                    if (files.Length > 0)
+                    {
+                        mediaPath = files[0];
+                        label7.Text = "Выбран файл: " + Path.GetFileName(mediaPath);
+
+                        // Обновляем текст на панели
+                        dropZoneLabel2.Text = Path.GetFileName(mediaPath);
+                        dropZoneLabel2.Font = new Font(dropZoneLabel2.Font, FontStyle.Regular);
+                        dropZoneLabel2.ForeColor = SystemColors.ControlText;
+                    }
+                }
+            };
 
             // Добавляем в соответствующие панели
             panel1.Controls.Add(dropZoneLabel1);
@@ -149,7 +187,7 @@ namespace YMCA
 
                     byte[] fileBytes = File.ReadAllBytes(filePath);
                     FileConverter converter = new FileConverter();
-                    converter.ConvertMedia(fileBytes, Path.GetFileName(filePath), schemas[selectedIndex], progressBar1, label4);
+                    converter.ConvertFile(fileBytes, Path.GetFileName(filePath), schemas[selectedIndex], progressBar1, label4);
                 }
                 catch (Exception ex)
                 {
@@ -161,6 +199,40 @@ namespace YMCA
                 MessageBox.Show("Файл не выбран!", "Ошибка загрузки файла");
             }
             
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                mediaPath = dialog.FileName;
+                label7.Text = "Выбран файл: " + Path.GetFileName(mediaPath);
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(mediaPath))
+            {
+                try
+                {
+                    progressBar2.Value = 0;
+                    label9.Text = "0.0%";
+
+                    MediaConverter converter = new MediaConverter();
+                    converter.ConvertMedia(mediaPath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"При загрузке файла произошла ошибка: {ex.Message}", "Ошибка загрузки файла");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Файл не выбран!", "Ошибка загрузки файла");
+            }
+
         }
     }
 }
