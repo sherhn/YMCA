@@ -156,7 +156,7 @@ namespace YMCA
                             while (i >= 0 && currentFlow[i] == lastChar)
                                 i--;
 
-                            // i теперь указывает на последний "полезный" символ
+                            // i указывает на последний "полезный" символ
                             currentFlow.Length = i + 1;
                         }
                     }
@@ -190,9 +190,6 @@ namespace YMCA
                     string byteString = bitString.Substring(i * 8, 8);
                     fileBytes[i] = Convert.ToByte(byteString, 2);
                 }
-
-                // Добавляем расширение к пути
-                outputPath = outputPath + "." + characteristics.Extension;
 
                 // Сохраняем файл
                 File.WriteAllBytes(outputPath, fileBytes);
