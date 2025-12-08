@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
@@ -11,6 +12,9 @@ namespace YMCA
     {
         public void ConvertFile(byte[] bytes, string filename, EncryptionSchema schema, ProgressBar progressBar, Label label)
         {
+            string originalTxtPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{filename}_original_bytes.txt");
+            File.WriteAllLines(originalTxtPath, bytes.Select(b => b.ToString("X2"))); // в шестнадцатеричном виде
+
             string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{filename}.mp4");
 
             FileTools tools = new FileTools();

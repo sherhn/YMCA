@@ -69,7 +69,7 @@ namespace YMCA
             try
             {
                 // Данные
-                StringBuilder bytesFlow = new StringBuilder();
+                StringBuilder digitsFlow = new StringBuilder();
                 StringBuilder currentFlow = new StringBuilder();
 
                 // Получаем все кадры
@@ -161,7 +161,7 @@ namespace YMCA
                         }
                     }
 
-                    bytesFlow.Append(currentFlow);
+                    digitsFlow.Append(currentFlow);
                     currentFlow.Clear();
 
                     // Обновляем прогресс
@@ -180,8 +180,12 @@ namespace YMCA
                     });
                 }
 
-                // Конвертация битовой строки в байты и создание файла
-                string bitString = bytesFlow.ToString();
+                // Преобразуем строку цифр (в системе счисления colors.Length) в битовую строку
+                string digitString = digitsFlow.ToString();
+                int baseSystem = colors.Length; // количество цветов = основание системы счисления
+                string bitString = tools.ConvertFromBaseToBinary(digitString, baseSystem);
+
+                // Конвертация битовой строки в байты
                 int byteCount = bitString.Length / 8;
                 byte[] fileBytes = new byte[byteCount];
 
@@ -192,7 +196,10 @@ namespace YMCA
                 }
 
                 // Сохраняем файл
-                File.WriteAllBytes(outputPath, fileBytes);
+                File.WriteAllBytes(outputPath + characteristics.Extension, fileBytes);
+
+                string txtPath = outputPath + "_bytes.txt";
+                File.WriteAllLines(txtPath, fileBytes.Select(b => b.ToString("X2"))); // в шестнадцатеричном виде
 
                 // Завершаем прогресс
                 label.Invoke((MethodInvoker)delegate
