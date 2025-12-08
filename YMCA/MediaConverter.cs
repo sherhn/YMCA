@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using YMCA.Resources;
@@ -41,6 +43,12 @@ namespace YMCA
             // Получаем алгоритм по сигнатуре
             EncryptionSchema schema = schemas.FirstOrDefault(s => s.Signature == characteristics.Signature);
 
+            if (schema == null)
+            {
+                MessageBox.Show("Не найден подходящий алгоритм для сигнатуры: " + characteristics.Signature, "Ошибка");
+                return;
+            }
+
             // Создаем массив массивов с цветами RGB
             int[][] colors = new int[schema.Colors.Length][];
 
@@ -62,14 +70,12 @@ namespace YMCA
             {
                 // Данные
                 StringBuilder bytesFlow = new StringBuilder();
-                StringBuilder currenFlow = new StringBuilder();
+                StringBuilder currentFlow = new StringBuilder();
 
                 // Получаем все кадры
                 string[] allFrames = Directory.GetFiles(tempDir);
-
-                // Переменные для обнаружения последнего фрейма
                 int allFramesCount = allFrames.Length;
-                int currentFrame = 1;
+                int currentFrame = 0;
 
                 // Обнуляем прогрессбар
                 progressBar.Invoke((MethodInvoker)delegate
@@ -82,77 +88,122 @@ namespace YMCA
 
                 foreach (string frame in allFrames)
                 {
-                    Bitmap bitmap = new Bitmap(frame);
-                    MessageBox.Show($"Ошибка:asa", "Ошибка обработки файла");
-                    int width = bitmap.Width;
-                    int height = bitmap.Height;
-
-                    int step = schema;
-
-                    int posX = characteristics.x;
-                    int posY = characteristics.y;
-
-                    while (posY < height)
-                    {
-                        while (posX < width)
-                        {
-                            Color pixel = bitmap.GetPixel(posX, posY);
-                            currenFlow.Append(tools.DetermineColorIndex(colors, pixel).ToString());
-
-                            posX += step;
-                        }
-
-                        posY += step;
-                        posX = characteristics.x;
-                    }
-
                     currentFrame++;
 
-                    if (currentFrame == allFramesCount && characteristics.Supplemented)
+                    using (Bitmap bitmap = new Bitmap(frame))
                     {
-                        int detLenght = currenFlow.Length - 1;
+                        // Используем LockBits для быстрого доступа к пикселям
+                        BitmapData bmpData = bitmap.LockBits(
+                            new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                            ImageLockMode.ReadOnly,
+                            PixelFormat.Format32bppArgb);
 
-                        char lastChar = currenFlow[detLenght];
+                        try
+                        {
+                            int stride = bmpData.Stride;
+                            int bytesPerPixel = 4; // 32bpp = 4 байта на пиксель
+                            byte[] pixelData = new byte[stride * bitmap.Height];
 
-                        int i = detLenght;
-                        while (i >= 0 && currenFlow[i] == lastChar)
-                            i--;
+                            // Копируем данные в массив
+                            Marshal.Copy(bmpData.Scan0, pixelData, 0, pixelData.Length);
 
-                        // i теперь указывает на последний "полезный" символ
-                        currenFlow.Length = i + 1;
+                            int width = bitmap.Width;
+                            int height = bitmap.Height;
+                            int step = schema;
+
+                            int posX = characteristics.x;
+                            int posY = characteristics.y;
+
+                            // Функция для получения цвета пикселя
+                            Color GetPixelFast(int xPos, int yPos)
+                            {
+                                int index = yPos * stride + xPos * bytesPerPixel;
+                                byte b = pixelData[index];
+                                byte g = pixelData[index + 1];
+                                byte r = pixelData[index + 2];
+                                return Color.FromArgb(r, g, b);
+                            }
+
+                            while (posY < height)
+                            {
+                                while (posX < width)
+                                {
+                                    Color pixel = GetPixelFast(posX, posY);
+                                    currentFlow.Append(tools.DetermineColorIndex(colors, pixel).ToString());
+                                    posX += step;
+                                }
+
+                                posY += step;
+                                posX = characteristics.x;
+                            }
+                        }
+                        finally
+                        {
+                            bitmap.UnlockBits(bmpData);
+                        }
                     }
 
-                    bytesFlow.Append(currenFlow);
-                    currenFlow.Clear();
+                    // Обработка последнего кадра, если файл был дополнен
+                    if (currentFrame == allFramesCount && characteristics.Supplemented)
+                    {
+                        int detLength = currentFlow.Length - 1;
 
-                    characteristics.x = Math.Max(0, schema / 2 - 1);
-                    characteristics.y = Math.Max(0, schema / 2 - 1);
+                        if (detLength >= 0)
+                        {
+                            char lastChar = currentFlow[detLength];
+                            int i = detLength;
 
-                    // Обновляем лейбл процента
+                            while (i >= 0 && currentFlow[i] == lastChar)
+                                i--;
+
+                            // i теперь указывает на последний "полезный" символ
+                            currentFlow.Length = i + 1;
+                        }
+                    }
+
+                    bytesFlow.Append(currentFlow);
+                    currentFlow.Clear();
+
+                    // Обновляем прогресс
+                    float progressPercentage = (float)currentFrame / allFramesCount * 100;
+
                     label.Invoke((MethodInvoker)delegate
                     {
-                        label.Text = $"{((float)currentFrame / allFramesCount * 100):F1}%";
+                        label.Text = $"{progressPercentage:F1}%";
                         label.Refresh();
                     });
 
-                    // Обновляем прогрессбар
                     progressBar.Invoke((MethodInvoker)delegate
                     {
-                        progressBar.Value = currentFrame + 1;
+                        progressBar.Value = currentFrame;
                         progressBar.Refresh();
                     });
                 }
 
-                // ТУТ ПРЕОБРАЗОВАНИЕ СТРОКИ БИТОВ В БАЙТЫ И СОЗДАНИЕ ФАЙЛА
+                // Конвертация битовой строки в байты и создание файла
+                string bitString = bytesFlow.ToString();
+                int byteCount = bitString.Length / 8;
+                byte[] fileBytes = new byte[byteCount];
 
-                // Завершаем лейбл процента
+                for (int i = 0; i < byteCount; i++)
+                {
+                    string byteString = bitString.Substring(i * 8, 8);
+                    fileBytes[i] = Convert.ToByte(byteString, 2);
+                }
+
+                // Добавляем расширение к пути
+                outputPath = outputPath + "." + characteristics.Extension;
+
+                // Сохраняем файл
+                File.WriteAllBytes(outputPath, fileBytes);
+
+                // Завершаем прогресс
                 label.Invoke((MethodInvoker)delegate
                 {
-                    label.Text = $"100.0%";
+                    label.Text = "100.0%";
                     label.Refresh();
                 });
 
-                // Завершаем прогресс-бар
                 progressBar.Invoke((MethodInvoker)delegate
                 {
                     progressBar.Value = progressBar.Maximum;

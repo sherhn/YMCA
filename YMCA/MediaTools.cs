@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
@@ -75,103 +77,132 @@ namespace YMCA.Resources
                 new int[] {255, 255, 255} // Белый
             };
 
-            Bitmap bitmap = new Bitmap(Path.Combine(mediapath, "frame_0001.png"));
+            string framePath = Path.Combine(mediapath, "frame_0001.png");
 
-            // Позиция
-            int x = 0;
-            int y = 0;
-            int step = 0;
-
-            // Определяем был ли файл дополнен
-            int firstPixel = DetermineColorIndex(baseColors, bitmap.GetPixel(x, 0));
-
-            if (firstPixel == 0)
+            using (Bitmap bitmap = new Bitmap(framePath))
             {
-                characteristics.Supplemented = true;
-            }
+                // Используем LockBits для быстрого доступа к пикселям
+                BitmapData bmpData = bitmap.LockBits(
+                    new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                    ImageLockMode.ReadOnly,
+                    PixelFormat.Format32bppArgb);
 
-            // Определяем шаг (кол-во пикселей на байт)
-            int secondPixel = firstPixel;
-
-            while (firstPixel == secondPixel)
-            {
-                x++;
-                step++;
-                secondPixel = DetermineColorIndex(baseColors, bitmap.GetPixel(x, 0));
-            }
-
-            // Берем середину по X для более устойчивой защмиы от помех сжатия
-            x = Math.Max(0, step / 2 - 1);
-
-            // Пропускаем идентификатор дополнения
-            x += step;
-
-            // Берем середину по Y для более устойчивой защмиы от помех сжатия
-            y = Math.Max(0, step / 2 - 1);
-
-            // Получаем id алгоритма
-            int pos = x;
-
-            StringBuilder signatureBuilder = new StringBuilder();
-
-            for (int i = 0; i < 8; i++)
-            {
-                x += step;
-
-                if (x > bitmap.Width)
+                try
                 {
-                    y += step;
+                    int stride = bmpData.Stride;
+                    int bytesPerPixel = 4; // 32bpp = 4 байта на пиксель
+                    byte[] pixelData = new byte[stride * bitmap.Height];
+
+                    // Копируем данные в массив
+                    Marshal.Copy(bmpData.Scan0, pixelData, 0, pixelData.Length);
+
+                    // Позиция
+                    int x = 0;
+                    int y = 0;
+                    int step = 0;
+
+                    // Функция для получения цвета пикселя
+                    Color GetPixelFast(int xPos, int yPos)
+                    {
+                        int index = yPos * stride + xPos * bytesPerPixel;
+                        byte b = pixelData[index];
+                        byte g = pixelData[index + 1];
+                        byte r = pixelData[index + 2];
+                        return Color.FromArgb(r, g, b);
+                    }
+
+                    // Определяем был ли файл дополнен
+                    int firstPixel = DetermineColorIndex(baseColors, GetPixelFast(x, 0));
+
+                    if (firstPixel == 0)
+                    {
+                        characteristics.Supplemented = true;
+                    }
+
+                    // Определяем шаг (кол-во пикселей на байт)
+                    int secondPixel = firstPixel;
+
+                    while (firstPixel == secondPixel)
+                    {
+                        x++;
+                        step++;
+                        secondPixel = DetermineColorIndex(baseColors, GetPixelFast(x, 0));
+                    }
+
+                    // Берем середину по X для более устойчивой защиты от помех сжатия
                     x = Math.Max(0, step / 2 - 1);
+
+                    // Пропускаем идентификатор дополнения
+                    x += step;
+
+                    // Берем середину по Y для более устойчивой защиты от помех сжатия
+                    y = Math.Max(0, step / 2 - 1);
+
+                    // Получаем id алгоритма
+                    int pos = x;
+
+                    StringBuilder signatureBuilder = new StringBuilder();
+
+                    for (int i = 0; i < 8; i++)
+                    {
+                        x += step;
+
+                        if (x >= bitmap.Width)
+                        {
+                            y += step;
+                            x = Math.Max(0, step / 2 - 1);
+                        }
+
+                        signatureBuilder.Append(DetermineColorIndex(baseColors, GetPixelFast(x, y)).ToString());
+                    }
+
+                    characteristics.Signature = signatureBuilder.ToString();
+
+                    // Читаем расширение файла
+                    StringBuilder bitExtension = new StringBuilder();
+                    List<char> chars = new List<char>();
+
+                    for (int j = 0; j < 80; j++)
+                    {
+                        x += step;
+
+                        if (x >= bitmap.Width)
+                        {
+                            y += step;
+                            x = Math.Max(0, step / 2 - 1);
+                        }
+
+                        bitExtension.Append(DetermineColorIndex(baseColors, GetPixelFast(x, y)).ToString());
+
+                        if (bitExtension.Length == 8)
+                        {
+                            int charCode = Convert.ToInt32(bitExtension.ToString(), 2);
+                            char c = (char)charCode;
+                            chars.Add(c);
+                            bitExtension.Clear();
+                        }
+                    }
+
+                    // Объединяем символы в строку
+                    StringBuilder extensionBuilder = new StringBuilder();
+                    foreach (char c in chars)
+                    {
+                        extensionBuilder.Append(c);
+                    }
+
+                    string extension = extensionBuilder.ToString();
+                    characteristics.Extension = extension.TrimEnd('\0');
+
+                    characteristics.x = x;
+                    characteristics.y = y;
                 }
-
-                signatureBuilder.Append(DetermineColorIndex(baseColors, bitmap.GetPixel(x, y)).ToString());
-            }
-
-            characteristics.Signature = signatureBuilder.ToString();
-
-            // Читаем расширение файла
-            StringBuilder bitExtension = new StringBuilder();
-            List<char> chars = new List<char>();
-
-            for (int j = 0; j < 80; j++)
-            {
-                x += step;
-
-                if (x > bitmap.Width)
+                finally
                 {
-                    y += step;
-                    x = Math.Max(0, step / 2 - 1);
-                }
-
-                bitExtension.Append(DetermineColorIndex(baseColors, bitmap.GetPixel(x, y)).ToString());
-
-                if (bitExtension.Length == 8)
-                {
-                    int charCode = Convert.ToInt32(bitExtension.ToString(), 2);
-
-                    // Конвертируем число в символ
-                    char c = (char)charCode;
-
-                    chars.Add(c);
-
-                    bitExtension.Clear();
+                    bitmap.UnlockBits(bmpData);
                 }
             }
 
-            // Объединяем символы в строку
-            StringBuilder extensionBuilder = new StringBuilder();
-            foreach (char c in chars)
-            {
-                extensionBuilder.Append(c);
-            }
-
-            string extension = extensionBuilder.ToString();
-
-            // Убираем нулевые символы в конце
-            characteristics.Extension = extension.TrimEnd('\0');
-
-
-            MessageBox.Show($"{characteristics.Supplemented} | {characteristics.Signature} | {x} | {y} | {step} | {characteristics.Extension}", "Ошибка загрузки файла");
+            MessageBox.Show($"{characteristics.Supplemented} | {characteristics.Signature} | {characteristics.x} | {characteristics.y} | {characteristics.Extension}", "Информация о файле");
         }
 
         public Color hexToColor(string hex)
