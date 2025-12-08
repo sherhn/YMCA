@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Forms;
 
 namespace YMCA
@@ -54,7 +55,11 @@ namespace YMCA
                     if (files.Length > 0)
                     {
                         filePath = files[0];
-                        label5.Text = "Выбран файл: " + Path.GetFileName(filePath);
+
+                        StringBuilder labelText = new StringBuilder();
+                        labelText.Append("Выбран файл: ");
+                        labelText.Append(Path.GetFileName(filePath));
+                        label5.Text = labelText.ToString();
 
                         // Обновляем текст на панели
                         dropZoneLabel1.Text = Path.GetFileName(filePath);
@@ -99,7 +104,11 @@ namespace YMCA
                     if (files.Length > 0)
                     {
                         mediaPath = files[0];
-                        label7.Text = "Выбран файл: " + Path.GetFileName(mediaPath);
+
+                        StringBuilder labelText = new StringBuilder();
+                        labelText.Append("Выбран файл: ");
+                        labelText.Append(Path.GetFileName(mediaPath));
+                        label7.Text = labelText.ToString();
 
                         // Обновляем текст на панели
                         dropZoneLabel2.Text = Path.GetFileName(mediaPath);
@@ -170,14 +179,18 @@ namespace YMCA
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 filePath = dialog.FileName;
-                label5.Text = "Выбран файл: " + Path.GetFileName(filePath);
+
+                StringBuilder labelText = new StringBuilder();
+                labelText.Append("Выбран файл: ");
+                labelText.Append(Path.GetFileName(filePath));
+                label5.Text = labelText.ToString();
             }
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             int selectedIndex = comboBox1.SelectedIndex;
-            
+
             if (!string.IsNullOrEmpty(filePath))
             {
                 try
@@ -198,7 +211,7 @@ namespace YMCA
             {
                 MessageBox.Show("Файл не выбран!", "Ошибка загрузки файла");
             }
-            
+
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -207,7 +220,11 @@ namespace YMCA
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 mediaPath = dialog.FileName;
-                label7.Text = "Выбран файл: " + Path.GetFileName(mediaPath);
+
+                StringBuilder labelText = new StringBuilder();
+                labelText.Append("Выбран файл: ");
+                labelText.Append(Path.GetFileName(mediaPath));
+                label7.Text = labelText.ToString();
             }
         }
 

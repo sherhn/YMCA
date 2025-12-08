@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 
 namespace YMCA
 {
@@ -53,7 +53,7 @@ namespace YMCA
             string tenChars = paddedExtension.Substring(0, 10);
 
             // Преобразуем каждый символ в двоичную строку
-            List<string> binaryParts = new List<string>();
+            StringBuilder binaryParts = new StringBuilder();
 
             foreach (char c in tenChars)
             {
@@ -64,12 +64,11 @@ namespace YMCA
                 // Дополняем нулями слева до 8 бит
                 string eightBits = binary.PadLeft(8, '0');
 
-                binaryParts.Add(eightBits);
+                binaryParts.Append(eightBits);
             }
 
             // Объединяем все биты в одну строку
-            string result = string.Join("", binaryParts);
-            return result;
+            return binaryParts.ToString();
         }
 
         public Color hexToColor(string hex)

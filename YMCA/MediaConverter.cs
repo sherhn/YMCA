@@ -4,7 +4,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using YMCA.Resources;
 
@@ -62,8 +61,8 @@ namespace YMCA
             try
             {
                 // Данные
-                string bytesFlow = "";
-                string currenFlow = "";
+                StringBuilder bytesFlow = new StringBuilder();
+                StringBuilder currenFlow = new StringBuilder();
 
                 // Получаем все кадры
                 string[] allFrames = Directory.GetFiles(tempDir);
@@ -98,7 +97,7 @@ namespace YMCA
                         while (posX < width)
                         {
                             Color pixel = bitmap.GetPixel(posX, posY);
-                            currenFlow += tools.DetermineColorIndex(colors, pixel).ToString();
+                            currenFlow.Append(tools.DetermineColorIndex(colors, pixel).ToString());
 
                             posX += step;
                         }
@@ -120,11 +119,11 @@ namespace YMCA
                             i--;
 
                         // i теперь указывает на последний "полезный" символ
-                        currenFlow = currenFlow.Substring(0, i + 1);
+                        currenFlow.Length = i + 1;
                     }
 
-                    bytesFlow += currenFlow;
-                    currenFlow = "";
+                    bytesFlow.Append(currenFlow);
+                    currenFlow.Clear();
 
                     characteristics.x = Math.Max(0, schema / 2 - 1);
                     characteristics.y = Math.Max(0, schema / 2 - 1);

@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 
 namespace YMCA
@@ -18,7 +19,11 @@ namespace YMCA
             string byte_flow = tools.getBytes(bytes, schema.Colors.Length);
 
             // Прибавляем расширение файла и алгоритм к началу строки битов
-            byte_flow = schema.Signature + tools.getSignature(Path.GetExtension(filename)) + byte_flow;
+            StringBuilder byteFlowBuilder = new StringBuilder();
+            byteFlowBuilder.Append(schema.Signature);
+            byteFlowBuilder.Append(tools.getSignature(Path.GetExtension(filename)));
+            byteFlowBuilder.Append(byte_flow);
+            byte_flow = byteFlowBuilder.ToString();
 
             // Один раз вычисляем длину битовой строки
             int byte_length = byte_flow.Length;

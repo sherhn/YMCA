@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 
 namespace YMCA.Resources
@@ -111,6 +112,8 @@ namespace YMCA.Resources
             // Получаем id алгоритма
             int pos = x;
 
+            StringBuilder signatureBuilder = new StringBuilder();
+
             for (int i = 0; i < 8; i++)
             {
                 x += step;
@@ -121,11 +124,13 @@ namespace YMCA.Resources
                     x = Math.Max(0, step / 2 - 1);
                 }
 
-                characteristics.Signature += DetermineColorIndex(baseColors, bitmap.GetPixel(x, y)).ToString();
+                signatureBuilder.Append(DetermineColorIndex(baseColors, bitmap.GetPixel(x, y)).ToString());
             }
 
+            characteristics.Signature = signatureBuilder.ToString();
+
             // Читаем расширение файла
-            string bitExtension = "";
+            StringBuilder bitExtension = new StringBuilder();
             List<char> chars = new List<char>();
 
             for (int j = 0; j < 80; j++)
@@ -138,23 +143,29 @@ namespace YMCA.Resources
                     x = Math.Max(0, step / 2 - 1);
                 }
 
-                bitExtension += DetermineColorIndex(baseColors, bitmap.GetPixel(x, y)).ToString();
+                bitExtension.Append(DetermineColorIndex(baseColors, bitmap.GetPixel(x, y)).ToString());
 
                 if (bitExtension.Length == 8)
                 {
-                    int charCode = Convert.ToInt32(bitExtension, 2);
-                    
+                    int charCode = Convert.ToInt32(bitExtension.ToString(), 2);
+
                     // Конвертируем число в символ
                     char c = (char)charCode;
 
                     chars.Add(c);
 
-                    bitExtension = "";
+                    bitExtension.Clear();
                 }
             }
 
             // Объединяем символы в строку
-            string extension = new string(chars.ToArray());
+            StringBuilder extensionBuilder = new StringBuilder();
+            foreach (char c in chars)
+            {
+                extensionBuilder.Append(c);
+            }
+
+            string extension = extensionBuilder.ToString();
 
             // Убираем нулевые символы в конце
             characteristics.Extension = extension.TrimEnd('\0');
