@@ -221,7 +221,7 @@ namespace YMCA
                     label9.Text = "0.0%";
 
                     MediaConverter converter = new MediaConverter();
-                    converter.ConvertMedia(mediaPath);
+                    converter.ConvertMedia(mediaPath, Path.GetFileName(mediaPath), schemas, progressBar2, label9);
                 }
                 catch (Exception ex)
                 {

@@ -161,7 +161,19 @@ namespace YMCA.Resources
 
 
             MessageBox.Show($"{characteristics.Supplemented} | {characteristics.Signature} | {x} | {y} | {step} | {characteristics.Extension}", "Ошибка загрузки файла");
+        }
 
+        public Color hexToColor(string hex)
+        {
+            // Убираем решетку
+            hex = hex.TrimStart('#');
+
+            // Разбираем компоненты
+            int r = Convert.ToInt32(hex.Substring(0, 2), 16);
+            int g = Convert.ToInt32(hex.Substring(2, 2), 16);
+            int b = Convert.ToInt32(hex.Substring(4, 2), 16);
+
+            return Color.FromArgb(r, g, b);
         }
     }
 }
