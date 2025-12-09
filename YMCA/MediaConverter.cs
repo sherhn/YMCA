@@ -21,7 +21,7 @@ namespace YMCA
 
     internal class MediaConverter
     {
-        public void ConvertMedia(string mediaPath, string filename, List<EncryptionSchema> schemas, ProgressBar progressBar, Label label, bool debug)
+        public void ConvertMedia(string mediaPath, string filename, List<EncryptionSchema> schemas, ProgressBar progressBar, Label label)
         {
             // Создаем временную папку в системной временной директории
             string tempDir = Path.Combine(Path.GetTempPath(), "YMCA_Frames_" + Guid.NewGuid().ToString());
@@ -34,7 +34,7 @@ namespace YMCA
             tools.getFrames(mediaPath, tempDir);
 
             // Получаем инфу о файле
-            tools.identifySignature(tempDir, ref characteristics, debug);
+            tools.identifySignature(tempDir, ref characteristics);
 
             // Создаем папку для результата
             string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{Path.GetFileNameWithoutExtension(filename)}");
@@ -57,20 +57,18 @@ namespace YMCA
                 colors[i] = new int[] { color.R, color.G, color.B };
             }
 
-            if (produce(tempDir, colors, schema.Schema, characteristics, outputPath, tools, progressBar, label, debug) == 0)
+            if (produce(tempDir, colors, schema.Schema, characteristics, outputPath, tools, progressBar, label) == 0)
             {
-                if (debug)
-                {
-                    // ВРЕМЕННАЯ ПАПКА НЕ УДАЛЯЕТСЯ
-                    MessageBox.Show($"Файл успешно создан: {outputPath + characteristics.Extension}\nВременная папка сохранена: {tempDir}", "Успешно");
-                } else
-                {
-                    MessageBox.Show($"Файл успешно создан: {outputPath + characteristics.Extension}");
-                }
+#if DEBUG
+                // ВРЕМЕННАЯ ПАПКА НЕ УДАЛЯЕТСЯ
+                MessageBox.Show($"Файл успешно создан: {outputPath + characteristics.Extension}\nВременная папка сохранена: {tempDir}", "Успешно");
+#else
+                MessageBox.Show($"Файл успешно создан: {outputPath + characteristics.Extension}");
+#endif
             }
         }
 
-        private int produce(string tempDir, int[][] colors, int schema, Characteristics characteristics, string outputPath, MediaTools tools, ProgressBar progressBar, Label label, bool debug)
+        private int produce(string tempDir, int[][] colors, int schema, Characteristics characteristics, string outputPath, MediaTools tools, ProgressBar progressBar, Label label)
         {
             try
             {
@@ -157,12 +155,11 @@ namespace YMCA
 
                     string currentBitString = currentFlow.ToString();
 
-                    if (debug)
-                    {
-                        string bitStringsPath2 = Path.Combine(tempDir, "frame_bit_strings12.txt");
-                        File.WriteAllLines(bitStringsPath2, currentBitString.Select((bits, index) =>
-                            $"Frame {index + 1:0000}: {bits}"));
-                    }
+#if DEBUG
+                    string bitStringsPath2 = Path.Combine(tempDir, "frame_bit_strings12.txt");
+                    File.WriteAllLines(bitStringsPath2, currentBitString.Select((bits, index) =>
+                        $"Frame {index + 1:0000}: {bits}"));
+#endif
 
                     frameBitStrings.Add(currentBitString);
 
@@ -204,13 +201,12 @@ namespace YMCA
                     });
                 }
 
-                if (debug)
-                {
-                    // Сохраняем битовые строки каждого кадра в файл
-                    string bitStringsPath = Path.Combine(tempDir, "frame_bit_strings.txt");
-                    File.WriteAllLines(bitStringsPath, frameBitStrings.Select((bits, index) =>
-                        $"Frame {index + 1:0000}: {bits}"));
-                }
+#if DEBUG
+                // Сохраняем битовые строки каждого кадра в файл
+                string bitStringsPath = Path.Combine(tempDir, "frame_bit_strings.txt");
+                File.WriteAllLines(bitStringsPath, frameBitStrings.Select((bits, index) =>
+                    $"Frame {index + 1:0000}: {bits}"));
+#endif
 
                 // Конвертация битовой строки в байты
                 string bitString = binaryFlow.ToString();
@@ -223,38 +219,37 @@ namespace YMCA
                     fileBytes[i] = Convert.ToByte(byteString, 2);
                 }
 
-                if (debug)
-                {
-                    // Сохраняем восстановленные байты во временную папку (в шестнадцатеричном виде)
-                    string recoveredBytesPath = Path.Combine(tempDir, "recovered_bytes_hex.txt");
-                    File.WriteAllLines(recoveredBytesPath, fileBytes.Select(b => b.ToString("X2")));
+#if DEBUG
+                // Сохраняем восстановленные байты во временную папку (в шестнадцатеричном виде)
+                string recoveredBytesPath = Path.Combine(tempDir, "recovered_bytes_hex.txt");
+                File.WriteAllLines(recoveredBytesPath, fileBytes.Select(b => b.ToString("X2")));
 
-                    // Сохраняем восстановленные байты во временную папку (в двоичном виде)
-                    string recoveredBinaryPath = Path.Combine(tempDir, "recovered_bytes_binary.txt");
-                    File.WriteAllLines(recoveredBinaryPath, fileBytes.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')));
-                }
+                // Сохраняем восстановленные байты во временную папку (в двоичном виде)
+                string recoveredBinaryPath = Path.Combine(tempDir, "recovered_bytes_binary.txt");
+                File.WriteAllLines(recoveredBinaryPath, fileBytes.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')));
+#endif
 
                 // Сохраняем файл
                 string finalOutputPath = outputPath + characteristics.Extension;
                 File.WriteAllBytes(finalOutputPath, fileBytes);
 
-                if (debug)
+#if DEBUG
+                // Сохраняем информацию о восстановленном файле
+                string recoveryInfoPath = Path.Combine(tempDir, "recovery_info.txt");
+                using (StreamWriter writer = new StreamWriter(recoveryInfoPath))
                 {
-                    // Сохраняем информацию о восстановленном файле
-                    string recoveryInfoPath = Path.Combine(tempDir, "recovery_info.txt");
-                    using (StreamWriter writer = new StreamWriter(recoveryInfoPath))
-                    {
-                        writer.WriteLine($"Recovered file: {finalOutputPath}");
-                        writer.WriteLine($"File size: {fileBytes.Length} bytes");
-                        writer.WriteLine($"File extension: {characteristics.Extension}");
-                        writer.WriteLine($"Binary string length: {bitString.Length}");
-                        writer.WriteLine($"Was supplemented: {characteristics.Supplemented}");
-                    }
-
-                    // Сохраняем общую битовую строку
-                    string allBitsPath = Path.Combine(tempDir, "all_bits.txt");
-                    File.WriteAllText(allBitsPath, $"Binary: {bitString}");
+                    writer.WriteLine($"Recovered file: {finalOutputPath}");
+                    writer.WriteLine($"File size: {fileBytes.Length} bytes");
+                    writer.WriteLine($"File extension: {characteristics.Extension}");
+                    writer.WriteLine($"Binary string length: {bitString.Length}");
+                    writer.WriteLine($"Was supplemented: {characteristics.Supplemented}");
                 }
+
+                // Сохраняем общую битовую строку
+                string allBitsPath = Path.Combine(tempDir, "all_bits.txt");
+                File.WriteAllText(allBitsPath, $"Binary: {bitString}");
+
+#endif
 
                 // Завершаем прогресс
                 label.Invoke((MethodInvoker)delegate
@@ -278,7 +273,8 @@ namespace YMCA
             finally
             {
                 // Удаляем временную папку, если не в режиме отладки
-                if (!debug && Directory.Exists(tempDir))
+#if !DEBUG
+                if (Directory.Exists(tempDir))
                 {
                     try
                     {
@@ -289,6 +285,7 @@ namespace YMCA
                         MessageBox.Show($"Не удалось удалить временную папку: {ex.Message}", "Предупреждение");
                     }
                 }
+#endif
             }
         }
     }

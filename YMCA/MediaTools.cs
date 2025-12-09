@@ -68,7 +68,7 @@ namespace YMCA
             return minIndex;
         }
 
-        public void identifySignature(string tempDir, ref Characteristics characteristics, bool debug)
+        public void identifySignature(string tempDir, ref Characteristics characteristics)
         {
             // Базовый массив черного и белого
             int[][] baseColors = new int[][]
@@ -210,10 +210,9 @@ namespace YMCA
                 }
             }
 
-            if (debug)
-            {
-                MessageBox.Show($"{characteristics.Supplemented} | {characteristics.Signature} | {characteristics.x} | {characteristics.y} | {characteristics.Extension}", "Информация о файле");
-            }
+#if DEBUG
+             MessageBox.Show($"{characteristics.Supplemented} | {characteristics.Signature} | {characteristics.x} | {characteristics.y} | {characteristics.Extension}", "Информация о файле");
+#endif
         }
 
         public Color hexToColor(string hex)
