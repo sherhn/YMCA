@@ -37,7 +37,7 @@ namespace YMCA
             tools.identifySignature(tempDir, ref characteristics);
 
             // Создаем папку для результата
-            string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{Path.GetFileNameWithoutExtension(filename)}");
+            string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(filename))}");
 
             // Получаем алгоритм по сигнатуре
             EncryptionSchema schema = schemas.FirstOrDefault(s => s.Signature == characteristics.Signature);
