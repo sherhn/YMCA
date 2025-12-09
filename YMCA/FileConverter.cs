@@ -4,12 +4,18 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace YMCA
 {
     internal class FileConverter
     {
+        public async Task ConvertFileAsync(byte[] bytes, string filename, EncryptionSchema schema, ProgressBar progressBar, Label label)
+        {
+            await Task.Run(() => ConvertFile(bytes, filename, schema, progressBar, label));
+        }
+
         public void ConvertFile(byte[] bytes, string filename, EncryptionSchema schema, ProgressBar progressBar, Label label)
         {
             // Создаем временную папку

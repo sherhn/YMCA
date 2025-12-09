@@ -187,7 +187,7 @@ namespace YMCA
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private async void button1_Click(object sender, EventArgs e)
         {
             int selectedIndex = comboBox1.SelectedIndex;
 
@@ -195,23 +195,33 @@ namespace YMCA
             {
                 try
                 {
+                    // Отключаем кнопку во время обработки
+                    button1.Enabled = false;
                     progressBar1.Value = 0;
                     label4.Text = "0.0%";
 
                     byte[] fileBytes = File.ReadAllBytes(filePath);
                     FileConverter converter = new FileConverter();
-                    converter.ConvertFile(fileBytes, Path.GetFileName(filePath), schemas[selectedIndex], progressBar1, label4);
+
+                    // Используем асинхронную версию
+                    await converter.ConvertFileAsync(fileBytes, Path.GetFileName(filePath),
+                        schemas[selectedIndex], progressBar1, label4);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"При загрузке файла произошла ошибка: {ex.Message}", "Ошибка загрузки файла");
+                    MessageBox.Show($"При загрузке файла произошла ошибка: {ex.Message}",
+                        "Ошибка загрузки файла");
+                }
+                finally
+                {
+                    // Включаем кнопку обратно
+                    button1.Enabled = true;
                 }
             }
             else
             {
                 MessageBox.Show("Файл не выбран!", "Ошибка загрузки файла");
             }
-
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -228,28 +238,38 @@ namespace YMCA
             }
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private async void button3_Click(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(mediaPath))
             {
                 try
                 {
+                    // Отключаем кнопку во время обработки
+                    button3.Enabled = false;
                     progressBar2.Value = 0;
                     label9.Text = "0.0%";
 
                     MediaConverter converter = new MediaConverter();
-                    converter.ConvertMedia(mediaPath, Path.GetFileName(mediaPath), schemas, progressBar2, label9);
+
+                    // Используем асинхронную версию
+                    await converter.ConvertMediaAsync(mediaPath, Path.GetFileName(mediaPath),
+                        schemas, progressBar2, label9);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"При загрузке файла произошла ошибка: {ex.Message}", "Ошибка загрузки файла");
+                    MessageBox.Show($"При загрузке файла произошла ошибка: {ex.Message}",
+                        "Ошибка загрузки файла");
+                }
+                finally
+                {
+                    // Включаем кнопку обратно
+                    button3.Enabled = true;
                 }
             }
             else
             {
                 MessageBox.Show("Файл не выбран!", "Ошибка загрузки файла");
             }
-
         }
     }
 }

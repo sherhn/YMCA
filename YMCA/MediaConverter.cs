@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace YMCA
@@ -21,6 +22,11 @@ namespace YMCA
 
     internal class MediaConverter
     {
+        public async Task ConvertMediaAsync(string mediaPath, string filename, List<EncryptionSchema> schemas, ProgressBar progressBar, Label label)
+        {
+            await Task.Run(() => ConvertMedia(mediaPath, filename, schemas, progressBar, label));
+        }
+
         public void ConvertMedia(string mediaPath, string filename, List<EncryptionSchema> schemas, ProgressBar progressBar, Label label)
         {
             // Создаем временную папку в системной временной директории
