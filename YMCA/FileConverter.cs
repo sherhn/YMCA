@@ -2,7 +2,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -24,9 +23,11 @@ namespace YMCA
 
             string originalBitString = "";
 
+#if DEBUG
             // Сохраняем оригинальные байты файла во временную папку
             string originalBytesPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(filename)}_original_bytes.txt");
             File.WriteAllLines(originalBytesPath, bytes.Select(b => b.ToString("X2"))); // в шестнадцатеричном виде
+#endif
 
             string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{filename}.mp4");
 
