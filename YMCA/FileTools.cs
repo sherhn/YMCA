@@ -7,13 +7,13 @@ namespace YMCA
 {
     internal class FileTools
     {
-        public string getBytes(byte[] file_bytes, int system)
+        public string getBytes(byte[] file_bytes)
         {
-            // Ковертируем бинарный массив в битовую строку
-            return string.Concat(file_bytes.Select(b => Convert.ToString(b, system)));
+            // Конвертируем бинарный массив в двоичную строку
+            return string.Concat(file_bytes.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')));
         }
 
-        public int[] calculateResolution(int fileLength)
+        public int[] calculateResolution(int totalBits)
         {
             // Все разрешения
             var resolutions = new[]
@@ -28,16 +28,38 @@ namespace YMCA
             };
 
             var bestResolution = resolutions[0];
-            int minValue = int.MaxValue;
+            int minWastePixels = int.MaxValue;
 
-            // Определяем лучшее разрешения, из принципа оставления наименьшего кол-ва пустых пикселей
             foreach (var res in resolutions)
             {
-                int value = fileLength % res.Size * res.Size;
-                if (value < minValue)
+                // Сколько пикселей нужно для всех битов
+                int pixelsNeeded = (int)Math.Ceiling((double)totalBits / 1);
+
+                // Если всё помещается в один кадр
+                if (pixelsNeeded <= res.Size)
                 {
-                    minValue = value;
-                    bestResolution = res;
+                    int wastePixels = res.Size - pixelsNeeded;
+                    if (wastePixels < minWastePixels)
+                    {
+                        minWastePixels = wastePixels;
+                        bestResolution = res;
+                    }
+                }
+                // Если нужно несколько кадров
+                else
+                {
+                    // Количество полных кадров
+                    int fullFrames = pixelsNeeded / res.Size;
+                    // Пиксели в последнем кадре
+                    int lastFramePixels = pixelsNeeded % res.Size;
+                    // Пустые пиксели в последнем кадре (если есть)
+                    int wastePixels = lastFramePixels == 0 ? 0 : res.Size - lastFramePixels;
+
+                    if (wastePixels < minWastePixels)
+                    {
+                        minWastePixels = wastePixels;
+                        bestResolution = res;
+                    }
                 }
             }
 

@@ -15,6 +15,9 @@ namespace YMCA
         string mediaPath;
         List<EncryptionSchema> schemas;
 
+        // Режим дебага
+        bool debug = false;
+
         public Form1()
         {
             InitializeComponent();
@@ -200,7 +203,7 @@ namespace YMCA
 
                     byte[] fileBytes = File.ReadAllBytes(filePath);
                     FileConverter converter = new FileConverter();
-                    converter.ConvertFile(fileBytes, Path.GetFileName(filePath), schemas[selectedIndex], progressBar1, label4);
+                    converter.ConvertFile(fileBytes, Path.GetFileName(filePath), schemas[selectedIndex], progressBar1, label4, debug);
                 }
                 catch (Exception ex)
                 {
@@ -238,7 +241,7 @@ namespace YMCA
                     label9.Text = "0.0%";
 
                     MediaConverter converter = new MediaConverter();
-                    converter.ConvertMedia(mediaPath, Path.GetFileName(mediaPath), schemas, progressBar2, label9);
+                    converter.ConvertMedia(mediaPath, Path.GetFileName(mediaPath), schemas, progressBar2, label9, debug);
                 }
                 catch (Exception ex)
                 {

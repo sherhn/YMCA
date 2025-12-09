@@ -68,7 +68,7 @@ namespace YMCA
             return minIndex;
         }
 
-        public void identifySignature(string tempDir, ref Characteristics characteristics)
+        public void identifySignature(string tempDir, ref Characteristics characteristics, bool debug)
         {
             // Базовый массив черного и белого
             int[][] baseColors = new int[][]
@@ -119,7 +119,7 @@ namespace YMCA
                         characteristics.Supplemented = true;
                     }
 
-                    // Определяем шаг (кол-во пикселей на байт)
+                    // Определяем шаг (кол-во пикселей на бит)
                     int secondPixel = firstPixel;
 
                     while (firstPixel == secondPixel)
@@ -193,6 +193,14 @@ namespace YMCA
                     string extension = extensionBuilder.ToString();
                     characteristics.Extension = extension.TrimEnd('\0');
 
+                    x += step;
+
+                    if (x >= bitmap.Width)
+                    {
+                        y += step;
+                        x = Math.Max(0, step / 2 - 1);
+                    }
+
                     characteristics.x = x;
                     characteristics.y = y;
                 }
@@ -202,7 +210,10 @@ namespace YMCA
                 }
             }
 
-            MessageBox.Show($"{characteristics.Supplemented} | {characteristics.Signature} | {characteristics.x} | {characteristics.y} | {characteristics.Extension}", "Информация о файле");
+            if (debug)
+            {
+                MessageBox.Show($"{characteristics.Supplemented} | {characteristics.Signature} | {characteristics.x} | {characteristics.y} | {characteristics.Extension}", "Информация о файле");
+            }
         }
 
         public Color hexToColor(string hex)
@@ -216,33 +227,6 @@ namespace YMCA
             int b = Convert.ToInt32(hex.Substring(4, 2), 16);
 
             return Color.FromArgb(r, g, b);
-        }
-
-        public string ConvertFromBaseToBinary(string digitString, int fromBase)
-        {
-            // Для системы счисления 2 (двоичной) ничего преобразовывать не нужно
-            if (fromBase == 2)
-                return digitString;
-
-            // Для других систем счисления (4, 8 и т.д.) преобразуем в двоичную
-            StringBuilder binaryBuilder = new StringBuilder();
-
-            foreach (char digitChar in digitString)
-            {
-                // Преобразуем символ в числовое значение
-                int digitValue = int.Parse(digitChar.ToString());
-
-                // Преобразуем это значение в двоичную строку
-                string binaryDigit = Convert.ToString(digitValue, 2);
-
-                // Дополняем нулями слева до log2(fromBase) бит
-                int bitsPerDigit = (int)Math.Ceiling(Math.Log(fromBase, 2));
-                binaryDigit = binaryDigit.PadLeft(bitsPerDigit, '0');
-
-                binaryBuilder.Append(binaryDigit);
-            }
-
-            return binaryBuilder.ToString();
         }
     }
 }

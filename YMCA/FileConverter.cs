@@ -10,36 +10,57 @@ namespace YMCA
 {
     internal class FileConverter
     {
-        public void ConvertFile(byte[] bytes, string filename, EncryptionSchema schema, ProgressBar progressBar, Label label)
+        public void ConvertFile(byte[] bytes, string filename, EncryptionSchema schema, ProgressBar progressBar, Label label, bool debug)
         {
-            string originalTxtPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{filename}_original_bytes.txt");
-            File.WriteAllLines(originalTxtPath, bytes.Select(b => b.ToString("X2"))); // в шестнадцатеричном виде
+            // Создаем временную папку
+            string tempDir = Path.Combine(Path.GetTempPath(), "YMCA_Frames_" + Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDir);
+
+            string originalBitString = "";
+
+            // Сохраняем оригинальные байты файла во временную папку
+            string originalBytesPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(filename)}_original_bytes.txt");
+            File.WriteAllLines(originalBytesPath, bytes.Select(b => b.ToString("X2"))); // в шестнадцатеричном виде
 
             string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{filename}.mp4");
 
             FileTools tools = new FileTools();
 
-            // Получаем строку битов из бинарного потока
-            string byte_flow = tools.getBytes(bytes, schema.Colors.Length);
+            // Получаем двоичную строку из бинарного потока
+            string byte_flow = tools.getBytes(bytes);
 
-            // Прибавляем расширение файла и алгоритм к началу строки битов
+            if (debug)
+            {
+                // Сохраняем исходную двоичную строку
+                originalBitString = byte_flow;
+
+                // Сохраняем оригинальную двоичную строку во временную папку
+                string originalBitsPath = Path.Combine(tempDir, "original_bits.txt");
+                File.WriteAllText(originalBitsPath, originalBitString);
+            }
+
+            // Прибавляем расширение файла и алгоритм к началу двоичной строки
             StringBuilder byteFlowBuilder = new StringBuilder();
-            byteFlowBuilder.Append(schema.Signature);
-            byteFlowBuilder.Append(tools.getSignature(Path.GetExtension(filename)));
+            byteFlowBuilder.Append(schema.Signature); // 8 бит (только 0 и 1)
+            byteFlowBuilder.Append(tools.getSignature(Path.GetExtension(filename))); // 80 бит
             byteFlowBuilder.Append(byte_flow);
             byte_flow = byteFlowBuilder.ToString();
 
-            // Один раз вычисляем длину битовой строки
+            // Один раз вычисляем длину двоичной строки
             int byte_length = byte_flow.Length;
 
             // Считаем подход. разрешение
-            int[] frame_scale = tools.calculateResolution((byte_length + 2) * schema.Schema);
+            int[] frame_scale = tools.calculateResolution((byte_length + 2) * schema.Schema * schema.Schema);
 
             // Кол-во кадров с учетом схемы масштабирования
             int bits_per_frame = frame_scale[2] / (schema.Schema * schema.Schema);
             int frame_count = (int)Math.Ceiling((double)(byte_length + 2) / bits_per_frame);
 
             // Механизм, который помогает дополнить последний кадр до конца
+            string supplementedBitString = byte_flow;
+            bool wasSupplemented = false;
+            string supplementChar = "";
+
             if ((byte_length + 2) % bits_per_frame == 0)
             {
                 // Метка, что последний кадр заполнен до конца
@@ -49,32 +70,55 @@ namespace YMCA
             {
                 // Метка, что последний кадр был дополнен
                 byte_flow = "01" + byte_flow;
+                wasSupplemented = true;
 
-                // Последний пиксель
-                int n = (int)char.GetNumericValue(byte_flow[byte_length - 1]);
+                // Последний бит
+                char lastBit = byte_flow[byte_length - 1];
 
-                // Определяем последний пиксель, чтобы понять каким пикселем закрашивать остаток
-                int free_pixel_index = (n == 0) ? 1 : 0;
+                // Определяем последний бит, чтобы понять каким битом закрашивать остаток
+                char free_pixel = (lastBit == '0') ? '1' : '0';
+                supplementChar = free_pixel.ToString();
 
-                // Дополняем битовую строку до конца (до полного количества битов во всех кадрах)
+                // Дополняем двоичную строку до конца (до полного количества битов во всех кадрах)
                 int total_bits_needed = frame_count * bits_per_frame;
-                byte_flow = byte_flow.PadRight(total_bits_needed, (char)('0' + free_pixel_index));
+                byte_flow = byte_flow.PadRight(total_bits_needed, free_pixel);
             }
 
-            if (produce(schema.Colors, schema.Schema, schema.Crf, frame_scale, frame_count, byte_flow, outputPath, tools, progressBar, label) == 0)
+            if (debug) {
+                // Сохраняем информацию о двоичных строках
+                string bitInfoPath = Path.Combine(tempDir, "bit_strings_info.txt");
+                using (StreamWriter writer = new StreamWriter(bitInfoPath))
+                {
+                    writer.WriteLine($"Original bit string (без сигнатуры и меток): {originalBitString}");
+                    writer.WriteLine($"Signature: {schema.Signature}");
+                    writer.WriteLine($"File signature: {tools.getSignature(Path.GetExtension(filename))}");
+                    writer.WriteLine($"Combined (с сигнатурой): {supplementedBitString}");
+                    writer.WriteLine($"Final (с метками): {byte_flow}");
+                    writer.WriteLine($"Was supplemented: {wasSupplemented}");
+                    writer.WriteLine($"Supplement character: {supplementChar}");
+                    writer.WriteLine($"Bits per frame: {bits_per_frame}");
+                    writer.WriteLine($"Frame count: {frame_count}");
+                    writer.WriteLine($"Total bits: {byte_flow.Length}");
+                }
+            }
+
+            if (produce(tempDir, schema.Colors, schema.Schema, schema.Crf, frame_scale, frame_count, byte_flow, originalBitString, outputPath, tools, progressBar, label, debug) == 0)
             {
-                MessageBox.Show($"Файл успешно создан: {outputPath}", "Успешно");
+                if (debug)
+                {
+                    MessageBox.Show($"Файл успешно создан: {outputPath}\nВременная папка сохранена: {tempDir}\nОригинальные байты сохранены в: {originalBytesPath}", "Успешно");
+                }
+                else
+                {
+                    MessageBox.Show($"Файл успешно создан: {outputPath}");
+                }
             }
         }
 
-        private int produce(string[] colors, int schema, int crf, int[] frame_scale, int frame_count, string byte_flow, string outputPath, FileTools tools, ProgressBar progressBar, Label label)
+        private int produce(string tempDir, string[] colors, int schema, int crf, int[] frame_scale, int frame_count, string byte_flow, string originalBitString, string outputPath, FileTools tools, ProgressBar progressBar, Label label, bool debug)
         {
             try
             {
-                // Создаем временную папку в системной временной директории
-                string tempDir = Path.Combine(Path.GetTempPath(), "YMCA_Frames_" + Guid.NewGuid().ToString());
-                Directory.CreateDirectory(tempDir);
-
                 // Обнуляем прогрессбар
                 progressBar.Invoke((MethodInvoker)delegate
                 {
@@ -99,10 +143,16 @@ namespace YMCA
                     int global_x = 0;
                     int global_y = 0;
 
+                    StringBuilder frameBitString = new StringBuilder();
+
                     // Заполнение кадров
                     for (int j = cur_pos; j < next_pos && j < byte_flow.Length; j++)
                     {
-                        int colorIndex = byte_flow[j] - '0';
+                        char bit = byte_flow[j];
+                        frameBitString.Append(bit);
+
+                        int colorIndex = bit - '0';
+
                         if (colorIndex >= 0 && colorIndex < colors.Length)
                         {
                             Color pixelColor = tools.hexToColor(colors[colorIndex]);
@@ -135,6 +185,21 @@ namespace YMCA
                     string outpuFrametPath = Path.Combine(tempDir, $"frame_{i:0000}.png");
                     bitmap.Save(outpuFrametPath, ImageFormat.Png);
                     bitmap.Dispose();
+
+                    if (debug)
+                    {
+                        // Сохраняем двоичную строку для этого кадра (без сигнатуры и доп битов)
+                        string frameBits = frameBitString.ToString();
+                        string frameBitsPath = Path.Combine(tempDir, $"frame_{i:0000}_bits.txt");
+
+                        // Удаляем первые 2 бита (метки) для первого кадра
+                        if (i == 0 && frameBits.Length >= 2)
+                        {
+                            frameBits = frameBits.Substring(2); // Убираем метки "10" или "01"
+                        }
+
+                        File.WriteAllText(frameBitsPath, frameBits);
+                    }
 
                     // Обновляем лейбл процента
                     label.Invoke((MethodInvoker)delegate
@@ -192,19 +257,27 @@ namespace YMCA
                     return -1;
                 }
 
-                // Удаляем временную папку
-                try
-                {
-                    Directory.Delete(tempDir, true);
-                }
-                catch { }
-
                 return 0;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка обработки файла");
                 return -1;
+            }
+            finally
+            {
+                // Удаляем временную папку, если не в режиме отладки
+                if (!debug && Directory.Exists(tempDir))
+                {
+                    try
+                    {
+                        Directory.Delete(tempDir, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Не удалось удалить временную папку: {ex.Message}", "Предупреждение");
+                    }
+                }
             }
         }
     }
