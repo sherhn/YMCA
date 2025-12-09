@@ -13,6 +13,6 @@
     "signature": "00000001",
     "colors": [ "#000000", "#FFFFFF" ],
     "schema": 4,
-    "crf": 40
+    "crf": 20
   }
 ]
