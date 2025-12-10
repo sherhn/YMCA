@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace YMCA
 {
@@ -103,17 +104,24 @@ namespace YMCA
                     string[] files = (string[])ev.Data.GetData(DataFormats.FileDrop);
                     if (files.Length > 0)
                     {
-                        mediaPath = files[0];
+                        if (Path.GetExtension(files[0]) == ".mp4")
+                        {
+                            mediaPath = files[0];
 
-                        StringBuilder labelText = new StringBuilder();
-                        labelText.Append("Выбран файл: ");
-                        labelText.Append(Path.GetFileName(mediaPath));
-                        label7.Text = labelText.ToString();
+                            StringBuilder labelText = new StringBuilder();
+                            labelText.Append("Выбран файл: ");
+                            labelText.Append(Path.GetFileName(mediaPath));
+                            label7.Text = labelText.ToString();
 
-                        // Обновляем текст на панели
-                        dropZoneLabel2.Text = Path.GetFileName(mediaPath);
-                        dropZoneLabel2.Font = new Font(dropZoneLabel2.Font, FontStyle.Regular);
-                        dropZoneLabel2.ForeColor = SystemColors.ControlText;
+                            // Обновляем текст на панели
+                            dropZoneLabel2.Text = Path.GetFileName(mediaPath);
+                            dropZoneLabel2.Font = new Font(dropZoneLabel2.Font, FontStyle.Regular);
+                            dropZoneLabel2.ForeColor = SystemColors.ControlText;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Неверный тип файла", "Ошибка");
+                        }
                     }
                 }
             };
@@ -178,12 +186,18 @@ namespace YMCA
             OpenFileDialog dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                filePath = dialog.FileName;
+                if (Path.GetExtension(dialog.FileName) == ".mp4")
+                {
+                    filePath = dialog.FileName;
 
-                StringBuilder labelText = new StringBuilder();
-                labelText.Append("Выбран файл: ");
-                labelText.Append(Path.GetFileName(filePath));
-                label5.Text = labelText.ToString();
+                    StringBuilder labelText = new StringBuilder();
+                    labelText.Append("Выбран файл: ");
+                    labelText.Append(Path.GetFileName(filePath));
+                    label5.Text = labelText.ToString();
+                } else
+                {
+                    MessageBox.Show("Неверный тип файла", "Ошибка");
+                }
             }
         }
 
