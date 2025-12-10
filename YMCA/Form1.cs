@@ -135,8 +135,9 @@ namespace YMCA
         {
             try
             {
+
                 // Инициализируем поле класса schemas
-                schemas = EncryptionSchema.LoadSchemasFromJson(@"Resources/algorithms.json");
+                schemas = EncryptionSchema.LoadSchemasFromJson(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "Resources", "algorithms.json"));
 
                 // Фильтруем null-элементы и добавляем только валидные
                 foreach (var schema in schemas)
